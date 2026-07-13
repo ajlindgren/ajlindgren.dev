@@ -1,0 +1,42 @@
+:root {
+  color-scheme: dark;
+  --bg: #1a1108;
+  --fg: #f4ead8;
+  --accent: #d9a15a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family:
+    ui-serif,
+    'Iowan Old Style',
+    'Palatino Linotype',
+    Palatino,
+    'Book Antiqua',
+    Georgia,
+    serif;
+  overflow: hidden;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+canvas {
+  display: block;
+  touch-action: none;
+}
