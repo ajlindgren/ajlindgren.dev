@@ -24,7 +24,16 @@ export function buildFaceMapping(radius = 0.5): FaceMapping {
   const pos = geom.getAttribute('position');
   const idx = geom.getIndex();
 
-  const groups = new Map<string, { normal: THREE.Vector3; centroid: THREE.Vector3; count: number }>();
+  const groups: { normal: THREE.Vector3; centroid: THREE.Vector3; count: number }[] = [];
+
+  // Two triangles belong to the same pentagon iff their normals are (near-)
+  // parallel. Adjacent dodecahedron faces differ by ~63.4° (dot ≈ 0.447), so
+  // any threshold near 1 is unambiguous. String-quantizing components
+  // (toFixed) is NOT a safe bucket key: face normals have exact-zero
+  // components, and cross-product noise lands on either side of 0, splitting
+  // one face into "0.000" and "-0.000" buckets (12 faces became 17 in the
+  // first Pages deploy).
+  const SAME_FACE_DOT = 0.99;
 
   const triCount = idx ? idx.count / 3 : pos.count / 3;
   const a = new THREE.Vector3();
@@ -45,15 +54,13 @@ export function buildFaceMapping(radius = 0.5): FaceMapping {
     ac.subVectors(c, a);
     n.crossVectors(ab, ac).normalize();
 
-    // Quantize normal to bucket triangles by shared face
-    const key = `${n.x.toFixed(3)},${n.y.toFixed(3)},${n.z.toFixed(3)}`;
     const centroidTri = new THREE.Vector3().addVectors(a, b).add(c).divideScalar(3);
-    const existing = groups.get(key);
+    const existing = groups.find((g) => g.normal.dot(n) > SAME_FACE_DOT);
     if (existing) {
       existing.centroid.add(centroidTri);
       existing.count++;
     } else {
-      groups.set(key, {
+      groups.push({
         normal: n.clone(),
         centroid: centroidTri.clone(),
         count: 1
@@ -61,7 +68,7 @@ export function buildFaceMapping(radius = 0.5): FaceMapping {
     }
   }
 
-  const faces = Array.from(groups.values()).map((g) => ({
+  const faces = groups.map((g) => ({
     normal: g.normal,
     centroid: g.centroid.divideScalar(g.count)
   }));
