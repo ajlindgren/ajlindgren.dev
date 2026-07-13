@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { T, useTask, useThrelte } from '@threlte/core';
   import { RigidBody, AutoColliders, useRapier } from '@threlte/rapier';
-  import { interactivity } from '@threlte/extras';
+  import { interactivity, type IntersectionEvent } from '@threlte/extras';
   import { goto } from '$app/navigation';
   import * as THREE from 'three';
   import type { RigidBody as RapierRigidBody } from '@dimforge/rapier3d-compat';
@@ -92,12 +92,16 @@
     if (!dragging) setCursor('');
   }
 
-  function onPointerDown(e: PointerEvent) {
+  // The mesh's pointerdown is delivered by @threlte/extras `interactivity()` as
+  // an IntersectionEvent, so client coords / pointerId live on `nativeEvent`,
+  // not the event itself — reading them off `e` directly yields NaN and bails.
+  function onPointerDown(e: IntersectionEvent<PointerEvent>) {
     if (!rigidBody || hasNavigated) return;
+    const ev = e.nativeEvent;
     const rbPos = rigidBody.translation();
     // Drag on a horizontal plane lifted above the die's current height.
     dragPlane.constant = -(rbPos.y + DRAG_LIFT);
-    if (!screenToWorld(e.clientX, e.clientY, targetPoint)) return;
+    if (!screenToWorld(ev.clientX, ev.clientY, targetPoint)) return;
 
     // Grab is a kinematic hold: no gravity, follows the pointer exactly.
     rigidBody.setBodyType(rapier.RigidBodyType.KinematicPositionBased, true);
@@ -110,7 +114,9 @@
     setCursor('grabbing');
     pointerHistory.length = 0;
     pointerHistory.push({ t: performance.now(), x: rbPos.x, y: rbPos.y + DRAG_LIFT, z: rbPos.z });
-    (e.target as HTMLElement | null)?.setPointerCapture?.(e.pointerId);
+    // Capture on the canvas so drag survives the pointer leaving the die/canvas;
+    // window-level pointerup/pointercancel still backstop release if capture is lost.
+    renderer?.domElement?.setPointerCapture?.(ev.pointerId);
   }
 
   function onPointerMove(e: PointerEvent) {
