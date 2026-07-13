@@ -15,7 +15,7 @@ const SAMPLE_URLS = [
   '/audio/clatter_06.mp3'
 ];
 
-const COOLDOWN_MS = 40;
+const COOLDOWN_MS = 75;
 
 let pool: HTMLAudioElement[] = [];
 let unlocked = false;
@@ -61,6 +61,8 @@ export function playRandomHit(volume = 1): void {
   const source = idle.length > 0 ? idle[Math.floor(Math.random() * idle.length)] : pool[Math.floor(Math.random() * pool.length)];
   source.currentTime = 0;
   source.volume = Math.max(0, Math.min(1, volume));
+  // Slight pitch variation so repeated impacts don't sound identical.
+  source.playbackRate = 0.92 + Math.random() * 0.16;
   source.play().catch(() => {
     /* missing sample file — silent */
   });
