@@ -19,8 +19,7 @@ export const FACES: Record<FaceNumber, FaceEntry> = {
   3: {
     route: '/faces/3',
     display_name: 'The Library of Unfinished Books',
-    description:
-      'A candle-lit room of projects that were never finished — and were never failures. Each book opens to the one constraint that actually stopped it, and the one thing building it taught.'
+    description: 'Shelves for everything honestly abandoned.'
   },
   4: uncarved(4, 'IV'),
   5: uncarved(5, 'V'),

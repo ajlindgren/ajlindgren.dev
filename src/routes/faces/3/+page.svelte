@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageProps } from './$types';
   import type { Book } from './+page';
+  import { displayConstraint } from './books';
   import DieCorner from '$lib/components/DieCorner.svelte';
 
   let { data }: PageProps = $props();
@@ -69,8 +70,13 @@
     {#if drawerOpen}
       <div id="someday-drawer" class="drawer-open">
         <ul class="ideas">
-          {#each data.someday.ideas as idea, i (i)}
-            <li>{idea}</li>
+          {#each data.someday.cards as card, i (i)}
+            <li>
+              <span class="idea-title">{card.title}</span>
+              {#if card.note}
+                <span class="idea-note">{card.note}</span>
+              {/if}
+            </li>
           {/each}
         </ul>
         <p class="readonly-note">
@@ -91,28 +97,31 @@
       <button class="close" aria-label="Close book" onclick={closeBook}>×</button>
 
       <!-- Contract: the constraint is the dominant element of the page. It is
-           the largest text, above the fold, never hover-only or buried. -->
+           the largest text, above the fold, never hover-only or buried. A blank
+           constraint shows an explicit fallback rather than hiding the field. -->
       <p class="constraint-label">The constraint that actually stopped it</p>
-      <p class="constraint">{activeBook.constraint}</p>
+      <p class="constraint" class:unrecorded={!activeBook.constraint.trim()}>
+        {displayConstraint(activeBook.constraint)}
+      </p>
 
       <div class="page-meta">
         <h2 class="what-label">What it was</h2>
-        <p class="what">{activeBook.title}</p>
-        {#if activeBook.year}
-          <p class="year">{activeBook.year}</p>
+        <p class="what">{activeBook.what}</p>
+        {#if activeBook.started || activeBook.abandoned}
+          <p class="year">
+            {#if activeBook.started && activeBook.abandoned}
+              {activeBook.started} – {activeBook.abandoned}
+            {:else if activeBook.started}
+              started {activeBook.started}
+            {:else}
+              abandoned {activeBook.abandoned}
+            {/if}
+          </p>
         {/if}
 
         <h2 class="lesson-label">The one thing building it taught</h2>
-        <p class="lesson">{activeBook.lesson}</p>
+        <p class="lesson">{activeBook.taught}</p>
       </div>
-
-      {#if activeBook.paragraphs.length}
-        <div class="page-body">
-          {#each activeBook.paragraphs as para, i (i)}
-            <p>{para}</p>
-          {/each}
-        </div>
-      {/if}
     </article>
   </div>
 {/if}
@@ -266,12 +275,22 @@
     text-align: left;
   }
   .ideas li {
-    padding: 0.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.6rem 0;
     border-bottom: 1px dotted #3a2b18;
     color: #d8ceb8;
   }
   .ideas li:last-child {
     border-bottom: none;
+  }
+  .idea-title {
+    color: #d8ceb8;
+  }
+  .idea-note {
+    font-size: 0.82rem;
+    color: #9c8c6d;
   }
   .readonly-note {
     margin: 1rem 0 0;
@@ -346,6 +365,13 @@
     font-weight: 600;
     color: #1c1409;
   }
+  /* An unrecorded constraint stays visible but reads as an admission, not a
+     styled title — the room refuses to hide the omission. */
+  .constraint.unrecorded {
+    font-style: italic;
+    font-weight: 500;
+    color: #6b5836;
+  }
 
   .page-meta {
     border-top: 1px solid #d8c39a;
@@ -378,16 +404,6 @@
     font-size: 1.05rem;
     line-height: 1.5;
     color: #332716;
-  }
-  .page-body {
-    margin-top: 1.75rem;
-    border-top: 1px solid #d8c39a;
-    padding-top: 1.25rem;
-  }
-  .page-body p {
-    margin: 0 0 1rem;
-    line-height: 1.65;
-    color: #46381f;
   }
 
   @keyframes book-pull {

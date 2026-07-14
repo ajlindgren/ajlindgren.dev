@@ -1,8 +1,10 @@
 ---
-title: "[PATRON WRITES THIS] What it was"
-year: "[PATRON WRITES THIS]"
+title: "[PATRON WRITES THIS] The project's name"
+what: "[PATRON WRITES THIS] One line — what it was"
 constraint: "[PATRON WRITES THIS] The constraint that actually stopped it"
-lesson: "[PATRON WRITES THIS] The one thing building it taught"
+taught: "[PATRON WRITES THIS] The one thing building it taught"
+started: "YYYY-MM"
+abandoned: "YYYY-MM"
+order: 3
 ---
-[PATRON WRITES THIS] One honest page about the project — what you were reaching
-for, and where it quietly went unfinished.
+Body is ignored in the MVP — the page renders only the four fields above.
