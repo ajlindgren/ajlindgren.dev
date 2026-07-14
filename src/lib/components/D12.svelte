@@ -108,12 +108,16 @@
     rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
     rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
 
-    dragOffset.set(rbPos.x - targetPoint.x, 0, rbPos.z - targetPoint.z);
+    // Capture the full offset from cursor-hit to die center, including the
+    // vertical gap between the lifted drag plane and the die's resting height.
+    // Re-applied every move so the die keeps its exact press-time relationship
+    // to the cursor — no upward snap, no re-centering when grabbed off-center.
+    dragOffset.set(rbPos.x - targetPoint.x, rbPos.y - targetPoint.y, rbPos.z - targetPoint.z);
     dragging = true;
     restStartedAt = null;
     setCursor('grabbing');
     pointerHistory.length = 0;
-    pointerHistory.push({ t: performance.now(), x: rbPos.x, y: rbPos.y + DRAG_LIFT, z: rbPos.z });
+    pointerHistory.push({ t: performance.now(), x: rbPos.x, y: rbPos.y, z: rbPos.z });
     // Capture on the canvas so drag survives the pointer leaving the die/canvas;
     // window-level pointerup/pointercancel still backstop release if capture is lost.
     renderer?.domElement?.setPointerCapture?.(ev.pointerId);
@@ -123,7 +127,7 @@
     if (!dragging || !rigidBody) return;
     if (!screenToWorld(e.clientX, e.clientY, targetPoint)) return;
     const x = targetPoint.x + dragOffset.x;
-    const y = targetPoint.y;
+    const y = targetPoint.y + dragOffset.y;
     const z = targetPoint.z + dragOffset.z;
     rigidBody.setNextKinematicTranslation({ x, y, z });
     pointerHistory.push({ t: performance.now(), x, y, z });
@@ -151,15 +155,13 @@
     clampLength(flickVel, MAX_LINVEL);
     rigidBody.setLinvel({ x: flickVel.x, y: flickVel.y, z: flickVel.z }, true);
 
-    // Spin: tumble about the axis perpendicular to the throw, plus a random
-    // component so even a straight drag produces varied, non-deterministic rolls.
+    // Spin: tumble about the axis perpendicular to the throw. Deterministic —
+    // identical flick input yields the same roll.
     const spinAxis = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), flickVel);
     const spinMag = Math.min(MAX_ANGVEL, flickVel.length() * 2.5);
     if (spinAxis.lengthSq() > 1e-6) spinAxis.normalize().multiplyScalar(spinMag);
-    const jitter = () => (Math.random() - 0.5) * 6;
-    const angvel = new THREE.Vector3(spinAxis.x + jitter(), spinAxis.y + jitter(), spinAxis.z + jitter());
-    clampLength(angvel, MAX_ANGVEL);
-    rigidBody.setAngvel({ x: angvel.x, y: angvel.y, z: angvel.z }, true);
+    clampLength(spinAxis, MAX_ANGVEL);
+    rigidBody.setAngvel({ x: spinAxis.x, y: spinAxis.y, z: spinAxis.z }, true);
 
     hasBeenThrown = true;
     pointerHistory.length = 0;
@@ -176,7 +178,7 @@
     // Idle cue: gentle emissive pulse while the die waits to be grabbed. Purely
     // visual — it must never touch the rigid body, or "at rest" is a lie.
     if (dieMaterial && !hasBeenThrown) {
-      dieMaterial.emissiveIntensity = 0.05 + 0.05 * (0.5 + 0.5 * Math.sin(performance.now() / 600));
+      dieMaterial.emissiveIntensity = 0.18 + 0.32 * (0.5 + 0.5 * Math.sin(performance.now() / 300));
     } else if (dieMaterial) {
       dieMaterial.emissiveIntensity = 0;
     }
@@ -233,6 +235,7 @@
   <RigidBody
     bind:rigidBody
     type="fixed"
+    ccd
     linearDamping={0.2}
     angularDamping={0.15}
   >

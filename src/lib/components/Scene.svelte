@@ -3,6 +3,7 @@
   import { World } from '@threlte/rapier';
   import Floor from './Floor.svelte';
   import D12 from './D12.svelte';
+  import Walls from './Walls.svelte';
   import ContactShadow from './ContactShadow.svelte';
 </script>
 
@@ -26,6 +27,7 @@
 
   <World gravity={[0, -9.81, 0]}>
     <Floor />
+    <Walls />
     <ContactShadow />
     <D12 />
   </World>
