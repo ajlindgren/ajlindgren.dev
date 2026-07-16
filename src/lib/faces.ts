@@ -60,11 +60,13 @@ export const FACES: Record<FaceNumber, FaceEntry> = {
     'The Vault of Sound Money',
     "Where the swarm's economy is engraved in rolling coins."
   ),
-  7: uncarved(
-    7,
-    "The Cartographer's Attic",
-    'Hand-drawn maps of territories that do not exist yet.'
-  ),
+  7: {
+    route: '/faces/7',
+    display_name: "The Cartographer's Attic",
+    description: 'Self-refining charts of places that do not exist yet.',
+    title: "The Cartographer's Attic",
+    tagline: 'Hand-drawn maps of territories that do not exist yet.'
+  },
   8: uncarved(8, 'The Echo Canyon', 'A canyon that answers you in harmony.'),
   9: uncarved(
     9,
